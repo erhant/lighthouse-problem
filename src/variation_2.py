@@ -1,4 +1,3 @@
-from math import inf
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
@@ -7,25 +6,27 @@ rcParams.update({'figure.autolayout': True})
 from util import rotate, dist_2d, angle_2d, find_lighthouse_centers, find_lighthouse_illum_points
 
 
-def checkCollision(a, b, c, x, y, r):
+def checkCollision(x1, y1, x2, y2, cx, cy, r):
   """
-  Find if there is a collision of a line & circle. The line is in form ax+by+c=0 and circle is at center (x,y) with radius r.
-  If the line does not collide or is tangent, we say there is no collision.
+  Find if there is a collision of a line & circle. The line is between (x1, y1) and (x2, y2). Circle is at (cx, cy) with radius r.
 
-  Source: https://www.geeksforgeeks.org/check-line-touches-intersects-circle/
+  Source: https://math.stackexchange.com/a/275533 
   """ 
       
   # Finding the distance of line  
   # from center. 
-  d = ((abs(a * x + b * y + c)) / np.sqrt(a * a + b * b)) 
+  a = y1 - y2
+  b = x2 - x1
+  c = -(b*y1 + a*x1)
+  dist = ((abs(a * cx + b * cy + c)) / np.sqrt(a * a + b * b)) 
 
   # Checking if the distance is less  
   # than, greater than or equal to radius. 
-  if (r == d): # line is tangent
+  if (r == dist): # line is tangent
     return False
-  elif (r > d): # line is inside
+  elif (r > dist): # line is inside
     return True
-  elif (r < d): # line is outside
+  elif (r < dist): # line is outside
     return False
         
 def find_tangent(LL_s, LC_t):
@@ -52,28 +53,39 @@ def get_first_illumination_line(lighthouses):
 
   TODO: ERRORS HERE, NEED TO FIX
   """
-  target = lighthouses[0]
+  target = lighthouses[0] # this is the target
   
+  # starting from the closest immediate lighthouse
   for i in range(1,int(len(lighthouses)/2)):
-    print(i)
+    print("I:",i)
     source = lighthouses[i]
-    tang = find_tangent(source['left'], target['center']) # find tangent
-    coeff = np.polyfit([source['left'][0], tang[0]], [source['left'][1], tang[1]], 1) # finds the coefficients of y = px + q for points x, y.
-    for l in lighthouses[1:i+1]: # check if it collides with anything in between 
-      print("ey")
+    tang = find_tangent(source['left'], target['center']) # find tangent 
+    j = 0
+    coll = False
+
+    # see if this ray collides with anything in between
+    for j in range(i): 
+      l = lighthouses[j]
+      print("J:",j) 
       # y = px + q --> -px + y -q = 0
-      if not checkCollision(-coeff[0], 1, -coeff[1], l['center'][0], l['center'][1], 1):
-        return source['left'], tang, Line2D([source['left'][0], tang[0]], [source['left'][1], tang[1]], color='green', linewidth=0.5)
+      if not checkCollision(source['left'][0], source['left'][1], tang[0], tang[1], l['center'][0], l['center'][1], 1.0):
+        print("I",i,"does not collide with J",j)        
+      else:
+        print("I",i,"collides with J",j)
+        coll = True
+      j += 1
+    
+    if not coll:
+      return source['left'], tang, Line2D([source['left'][0], tang[0]], [source['left'][1], tang[1]], color='green', linewidth=0.5)
+    elif i+1 == int(len(lighthouses)/2):
+      return source['left'], tang, Line2D([source['left'][0], tang[0]], [source['left'][1], tang[1]], color='red', linewidth=0.5)
 
-
-if __name__ == "__main__":
-  num_lighthouses = 4
-  assert(num_lighthouses > 0)
+def draw_match(N):
   placement_center = (0.0, 0.0)
-  centers = find_lighthouse_centers(num_lighthouses, placement_center)
+  centers = find_lighthouse_centers(N, placement_center)
   lighthouses = []
   for c in centers:
-    left, mid, right = find_lighthouse_illum_points(num_lighthouses, c, placement_center)
+    left, mid, right = find_lighthouse_illum_points(N, c, placement_center)
     lighthouses.append({
       "center": c,
       "left": left,
@@ -100,6 +112,14 @@ if __name__ == "__main__":
   ax.scatter(source[0], source[1], color="green")
   ax.scatter(tangent[0], tangent[1], color="green")
 
-  plt.xlim([-num_lighthouses-1.5,num_lighthouses+1.5])
-  plt.ylim([-num_lighthouses-1.5, num_lighthouses+1.5])
+  plt.xlim([-N-1.5, N+1.5])
+  plt.ylim([-N-1.5, N+1.5])
+
+  ax.set_title(str(N)+" lighthouses")
   plt.show()
+
+if __name__ == "__main__":
+  num_lighthouses = 13 # bug with 4...
+  assert(num_lighthouses > 0)
+  draw_match(num_lighthouses)
+  

@@ -9,7 +9,7 @@ def dist_2d(p1, p2):
 
 def angle_2d(p1, p2, p3):
   """
-  Angle between 3 points p1, p2, p3. 
+  Angle between 3 points p1, p2, p3. Returns a degree
 
       p1
     /
