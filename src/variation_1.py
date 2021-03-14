@@ -59,7 +59,7 @@ def theorem_4_3_formula(N):
 
 def draw_all(N):
   '''
-  Draws the matching line only.
+  Draw all lines until a match.
   '''
   placement_center = (0.0, 0.0)
   centers = find_lighthouse_centers(N, placement_center)
@@ -118,14 +118,17 @@ def draw_all(N):
       plt.xlim([-N-1.5, target_cross_x+1.5])
 
   DA_theorem = theorem_4_3_formula(N)
-  print("Dark Area by Calculation:",DA)
-  print("Dark Area by Theorem:",DA_theorem)
+  print("D("+str(N)+") by Calculation:",DA)
+  print("D("+str(N)+") by Theorem:",DA_theorem)
   
   ax.set_title(str(N)+" lighthouses")
   plt.show()
   return DA, DA_theorem
 
 def draw_match(N):
+  '''
+  Draw the matching line only
+  '''
   placement_center = (0.0, 0.0)
   centers = find_lighthouse_centers(N, placement_center)
   lighthouses = []
@@ -176,14 +179,66 @@ def draw_match(N):
       plt.xlim([-N-1.5, target_cross_x+1.5])
 
   DA_theorem = theorem_4_3_formula(N)
-  print("Dark Area by Calculation:",DA)
-  print("Dark Area by Theorem:",DA_theorem)
+  print("D("+str(N)+") by Calculation:",DA)
+  print("D("+str(N)+") by Theorem:",DA_theorem)
   
   ax.set_title(str(N)+" lighthouses")
-  plt.show()
+  plt.show() 
   return DA, DA_theorem
+  
+def compute_darkness(N, print_res=True):  
+  if N == 1:
+    DA = 0
+  else:
+    placement_center = (0.0, 0.0)
+    centers = find_lighthouse_centers(N, placement_center)
+    lighthouses = []
+    for c in centers:
+      left, mid, right = find_lighthouse_illum_points(N, c, placement_center)
+      lighthouses.append({
+        "center": c,
+        "left": left,
+        "middle": mid,
+        "right": right
+      })
+    source, tangent, _ = get_first_illumination_line(lighthouses, placement_center)
+    if source[1] <= tangent[1]:
+      # The dark area is infinite
+      DA = inf      
+    else:
+       # We can find the dark area
+      coeff = np.polyfit([tangent[0], source[0]], [tangent[1], source[1]], 1) # finds the coefficients of y = ax + b for points x, y.
+      target_cross_x = -coeff[1]/coeff[0] # we look for 0 = ax' + b --> x = -b/a 
+      x = dist_2d((target_cross_x, 0.0), tangent) # this is the nugget, we can find the dark area from this.
+      DA = N * (x - np.arctan(x)) # Theorem 4.3
+
+  DA_theorem = theorem_4_3_formula(N)
+  if print_res:
+    print("D("+str(N)+") by Calculation:",DA)
+    print("D("+str(N)+") by Theorem:",DA_theorem)
+  return DA, DA_theorem
+
+def plot_results(maxL):
+  '''
+  Plotting code from the notebook. Plot the results upto a given number of lighthouses.
+
+  It does not include even numbers in the plot, as they are known to be inf.
+  ''' 
+  N_L = range(1,maxL+1)
+  DA, DA_theorem = zip(*[compute_darkness(N, print_res=False) for N in N_L]) 
+  fig = plt.figure()
+  ax = plt.axes()
+  ax.scatter(N_L[::2], DA_theorem[::2], c='green')
+  ax.scatter(N_L[::2], DA[::2], c='blue')
+  errs = [abs(DA[i]-DA_theorem[i]) for i in range(0, maxL, 2)]
+  ax.scatter(N_L[::2], errs, c='red')
+  ax.set_xlabel("Number of Lighthouses")
+  ax.set_ylabel("Total Dark Area")
+  plt.show()
 
 if __name__ == "__main__":
   num_lighthouses = 9
   assert(num_lighthouses > 0)
   draw_all(num_lighthouses)
+  #compute_darkness(num_lighthouses)
+  #plot_results(500)
