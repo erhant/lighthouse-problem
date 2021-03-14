@@ -28,6 +28,8 @@ This _adjustment_ happens around every 10 or 9 steps from what I have seen so fa
 
 ![n500_2_plot](https://github.com/erhant/lighthouse-problem/blob/main/img/500_v2.png?raw=true)
 
+*The question:* why is this plot like this? Why does that adjustment happen at that many steps?
+
 ## Usage
 You only need Python with `numpy` and `matplotlib`. 
 
