@@ -38,47 +38,38 @@ def find_tangent(LL_s, LC_t):
   """
   return rotate(LL_s, LC_t, np.arcsin(1/dist_2d(LL_s, LC_t)))
 
-def get_illumination_line(LL_s, LC_t):
+def get_illumination_line(lighthouses_between, LC_s, LL_s, LC_t):
   """
-  Draws the illumination line from a source lighthouse to target lighthouse (variation 1: source point of light)
+  Draws the illumination line from a source lighthouse to target lighthouse (variation 2: source point of light)
 
   Returns a boolean that shows whether it is a valid line, the tangent point, and a Line2D object to draw.
   """
   tang = find_tangent(LL_s, LC_t) 
-  return tang, Line2D([LL_s[0], tang[0]], [LL_s[1], tang[1]], color='orange', linewidth=0.5)
+  
+  if angle_2d(tang, LL_s, LC_s) < 90:
+    # if angle LC_s, LL_s, tang angle is less than 90 its a problem at the source 
+    return False, tang, Line2D([LL_s[0], tang[0]], [LL_s[1], tang[1]], color='red', linestyle="--", linewidth=0.5)
+  else:
+    # source is okay, see if it collides with anything in between
+    for lighthouse in lighthouses_between:
+      if checkCollision(LL_s[0], LL_s[1], tang[0], tang[1], lighthouse['center'][0], lighthouse['center'][1], 1.0):
+        return False, tang, Line2D([LL_s[0], tang[0]], [LL_s[1], tang[1]], color='red', linestyle="--", linewidth=0.5)
+
+    # no collisions
+    return True, tang, Line2D([LL_s[0], tang[0]], [LL_s[1], tang[1]], color='green', linewidth=0.5)
 
 def get_first_illumination_line(lighthouses):
   """
-  Finds the first valid illumination line in second variation.
-
-  TODO: ERRORS HERE, NEED TO FIX
+  Finds the first valid illumination line in second variation. 
   """
-  target = lighthouses[0] # this is the target
-  
-  # starting from the closest immediate lighthouse
-  for i in range(1,int(len(lighthouses)/2)):
-    print("I:",i)
-    source = lighthouses[i]
-    tang = find_tangent(source['left'], target['center']) # find tangent 
-    j = 0
-    coll = False
-
-    # see if this ray collides with anything in between
-    for j in range(i): 
-      l = lighthouses[j]
-      print("J:",j) 
-      # y = px + q --> -px + y -q = 0
-      if not checkCollision(source['left'][0], source['left'][1], tang[0], tang[1], l['center'][0], l['center'][1], 1.0):
-        print("I",i,"does not collide with J",j)        
-      else:
-        print("I",i,"collides with J",j)
-        coll = True
-      j += 1
-    
-    if not coll:
-      return source['left'], tang, Line2D([source['left'][0], tang[0]], [source['left'][1], tang[1]], color='green', linewidth=0.5)
-    elif i+1 == int(len(lighthouses)/2):
-      return source['left'], tang, Line2D([source['left'][0], tang[0]], [source['left'][1], tang[1]], color='red', linewidth=0.5)
+  target = lighthouses[0]
+  cur = 1 
+  for source in lighthouses[1:int(len(lighthouses)/2)+1]:
+    isValid, tang, line = get_illumination_line(lighthouses[1:cur], source['center'], source['left'], target['center'])
+    if isValid:
+      return source['center'], tang, line
+    cur += 1
+  raise Exception("No valid illuminations!") # we dont expect this to happen (but maybe it is possible :o)
 
 def draw_match(N):
   placement_center = (0.0, 0.0)
@@ -119,7 +110,7 @@ def draw_match(N):
   plt.show()
 
 if __name__ == "__main__":
-  num_lighthouses = 13 # bug with 4...
+  num_lighthouses = 19
   assert(num_lighthouses > 0)
   draw_match(num_lighthouses)
   
