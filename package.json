@@ -1,0 +1,25 @@
+{
+  "name": "lighthouse-problem",
+  "version": "1.0.0",
+  "description": "Drawing shapes for the lighthouse illumination problem.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erhant/lighthouse-problem.git"
+  },
+  "keywords": [
+    "geometry"
+  ],
+  "author": "erhant",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/erhant/lighthouse-problem/issues"
+  },
+  "homepage": "https://github.com/erhant/lighthouse-problem#readme",
+  "dependencies": {
+    "jshint": "^2.13.4"
+  }
+}
