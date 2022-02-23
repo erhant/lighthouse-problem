@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/erhant/lighthouse-problem#readme",
   "dependencies": {
+    "canvas-sketch": "^0.7.4",
+    "canvas-sketch-util": "^1.10.0",
     "jshint": "^2.13.4"
   }
 }
