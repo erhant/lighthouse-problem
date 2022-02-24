@@ -2,6 +2,8 @@
 
 This repository includes some codes regarding my paper ["A Lighthouse Illumination Problem"](https://arxiv.org/abs/1903.09001).
 
+TODO: arc has problems.
+
 There are two variations regarding how the illumination occurs, described briefly by the following figure from the paper:
 <p align="center">
   <img src="/img/lighthouses.png" width="540">
