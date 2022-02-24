@@ -19,7 +19,7 @@ function angle2D(a, o, b) {
   }
 }
 
-// Rotate p around o for ang radians.
+// Rotate p around o for ang radians. (counterclockwise)
 function rotate2D(p, o, ang) {
   return {
     x: o.x + Math.cos(ang) * (p.x - o.x) - Math.sin(ang) * (p.y - o.y),

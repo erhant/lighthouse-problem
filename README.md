@@ -2,7 +2,9 @@
 
 This repository includes some codes regarding my paper ["A Lighthouse Illumination Problem"](https://arxiv.org/abs/1903.09001).
 
-TODO: arc has problems.
+TODO: arc has problems??
+TODO: color lines differently, not both same
+TODO: draw two lines for tangents)
 
 There are two variations regarding how the illumination occurs, described briefly by the following figure from the paper:
 <p align="center">

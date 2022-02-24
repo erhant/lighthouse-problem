@@ -46,8 +46,8 @@ class LighthouseManager {
       x: ((this.n - 1) * lc.x + this.pc.x) / this.n,
       y: ((this.n - 1) * lc.y + this.pc.y) / this.n,
     };
-    const left = rotate2D(mid, lc, this.a / 2);
-    const right = rotate2D(mid, lc, -this.a / 2);
+    const right = rotate2D(mid, lc, this.a / 2);
+    const left = rotate2D(mid, lc, -this.a / 2);
     // create lighthouse
     this.Ls.push(
       new Lighthouse(
@@ -73,10 +73,7 @@ class LighthouseManager {
     if (v === Variation.POINT) {
       // first variation
       const tang = findTangentPoint2D(source.lc, target.lc, target.r);
-      if (
-        math.radToDeg(angle2D(this.pc, source.lc, tang)) >
-        math.radToDeg(this.a) / 2
-      ) {
+      if (angle2D(this.pc, source.lc, tang) > this.a / 2) {
         // no, cant illuminate behind the target
         return [false, source.lc, tang];
       } else {
@@ -89,7 +86,7 @@ class LighthouseManager {
         throw new Error("Please create all lighthouses before trying this.");
       } else {
         const tang = findTangentPoint2D(source.left, target.lc, target.r);
-        if (math.radToDeg(angle2D(tang, source.left, source.lc)) < 90) {
+        if (angle2D(tang, source.left, source.lc) < Math.PI / 2) {
           // problem is at the source
           return [false, source.left, tang];
         } else {

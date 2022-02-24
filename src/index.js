@@ -18,15 +18,15 @@ const DrawTypes = {
 const params = {
   N: 5,
   variation: 1, // 1:point, 2:arc
-  S: 3,
-  T: 0,
+  source: 3,
+  target: 0,
   drawType: DrawTypes.FIND,
 };
 
 const sketch = () => {
   return ({ context, width, height }) => {
-    params.S = params.S % params.N;
-    params.T = params.T % params.N;
+    params.source = params.source % params.N;
+    params.target = params.target % params.N;
     // background
     context.fillStyle = "#f7f4f4";
     context.fillRect(0, 0, width, height);
@@ -42,26 +42,30 @@ const sketch = () => {
 
     if (params.drawType === DrawTypes.FIND) {
       // find the first illuminating ID
-      const s = L.findFirstIlluminatingID(params.T, params.variation);
+      const s = L.findFirstIlluminatingID(params.target, params.variation);
       if (s !== -1) {
         drawIllumination(
           context,
-          L.tryIlluminate(s, params.T, params.variation)
+          L.tryIlluminate(s, params.target, params.variation)
         );
       } else {
-        console.log("NO lighthouse can illuminate this target.");
+        console.log("No lighthouse can illuminate this target.");
       }
     } else if (params.drawType === DrawTypes.CHOOSE) {
       drawIllumination(
         context,
-        L.tryIlluminate(params.S, params.T, params.variation)
+        L.tryIlluminate(params.source, params.target, params.variation)
       );
     } else if (params.drawType === DrawTypes.ALL) {
       // draw all
       for (let i = 1; i < params.N; i++) {
         drawIllumination(
           context,
-          L.tryIlluminate((params.T + i) % params.N, params.T, params.variation)
+          L.tryIlluminate(
+            (params.target + i) % params.N,
+            params.target,
+            params.variation
+          )
         );
       }
     }
@@ -82,8 +86,8 @@ const createPaneAndStart = async () => {
 
   folder = pane.addFolder({ title: "lighthouses" });
   folder.addInput(params, "N", { min: 2, max: 40, step: 1 });
-  folder.addInput(params, "S");
-  folder.addInput(params, "T");
+  folder.addInput(params, "source");
+  folder.addInput(params, "target");
   folder.addInput(params, "drawType", {
     options: {
       find: DrawTypes.FIND,

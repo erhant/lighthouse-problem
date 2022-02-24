@@ -4,6 +4,7 @@
   "description": "Drawing shapes for the lighthouse illumination problem.",
   "main": "index.js",
   "scripts": {
+    "start": "canvas-sketch ./src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
