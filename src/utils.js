@@ -49,9 +49,36 @@ function circleLineCollision2D(c, r, ls, le) {
 
 // s is a source point, and t is the center of a circle with radius r.
 // finds the tangent from source to that circle
-function findTangentPoint2D(s, t, r) {
+function findTangentPoints2D(s, t, r) {
   const ang = Math.asin(r / dist2D(s, t));
-  return rotate2D(t, s, ang);
+  return [rotate2D(t, s, ang), rotate2D(t, s, -ang)];
+}
+
+// Find the meeting point of lines [p1, p2] and [p3, p4]
+// https://observablehq.com/@bumbeishvili/two-unlimited-lines-intersection-in-javascript
+function findLineIntersection2D(p1, p2, p3, p4) {
+  // Check if none of the lines are of length 0
+  if ((p1.x === p2.x && p1.y === p2.y) || (p3.x === p4.x && p3.y === p4.y)) {
+    return false;
+  }
+
+  const denominator =
+    (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
+
+  // Lines are parallel
+  if (denominator === 0) {
+    return false;
+  }
+
+  const ua =
+    ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) /
+    denominator;
+  const ub =
+    ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) /
+    denominator;
+
+  // Return a object with the x and y coordinates of the intersection
+  return { x: p1.x + ua * (p2.x - p1.x), y: p1.y + ua * (p2.y - p1.y) };
 }
 
 // In a clock with n values, find the values at the shortest path between s and t.
@@ -81,6 +108,7 @@ module.exports = {
   rotate2D,
   angle2D,
   circleLineCollision2D,
-  findTangentPoint2D,
+  findTangentPoints2D,
+  findLineIntersection2D,
   shortestArcModulus,
 };

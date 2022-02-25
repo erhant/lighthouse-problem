@@ -4,7 +4,9 @@ const {
   angle2D,
   circleLineCollision2D,
   shortestArcModulus,
-  findTangentPoint2D,
+  findTangentPoints2D,
+  findLineIntersection2D,
+  dist2D,
 } = require("./utils");
 
 const Variation = {
@@ -71,38 +73,60 @@ class LighthouseManager {
     const source = this.Ls[sourceID];
     const target = this.Ls[targetID];
     if (v === Variation.POINT) {
-      // first variation
-      const tang = findTangentPoint2D(source.lc, target.lc, target.r);
-      if (angle2D(this.pc, source.lc, tang) > this.a / 2) {
-        // no, cant illuminate behind the target
-        return [false, source.lc, tang];
-      } else {
-        // yes, can illuminate behind the target
-        return [true, source.lc, tang];
-      }
+      // find tangent points
+      const [tang1, tang2] = findTangentPoints2D(
+        source.lc,
+        target.lc,
+        target.r
+      );
+      // check if they can reach behind the lighthouse
+      let [isValid1, isValid2] = [
+        this.isValidIntersection(target, source.lc, tang1),
+        this.isValidIntersection(target, source.lc, tang2),
+      ];
+      // check if they do not collide with the source lighthouse itself
+      isValid1 = isValid1 && angle2D(this.pc, source.lc, tang1) <= this.a / 2;
+      isValid2 = isValid2 && angle2D(this.pc, source.lc, tang2) <= this.a / 2;
+
+      return [source.lc, isValid1, tang1, isValid2, tang2];
     } else if (v === Variation.ARC) {
       // second variation
-      if (this.Ls.length != this.n) {
+      if (this.Ls.length != this.n)
         throw new Error("Please create all lighthouses before trying this.");
+
+      // TODO: draw arc (right) too
+
+      // find tangent points from arc (left)
+      const [tang1, tang2] = findTangentPoints2D(
+        source.left,
+        target.lc,
+        target.r
+      );
+      // check if they can reach behind the lighthouse
+      let [isValid1, isValid2] = [
+        this.isValidIntersection(target, source.left, tang1),
+        this.isValidIntersection(target, source.left, tang2),
+      ];
+      // check if they are at a correct angle with the source arc (must be more than 90)
+      isValid1 =
+        isValid1 && angle2D(source.lc, source.left, tang1) > Math.PI / 2;
+      isValid2 =
+        isValid2 && angle2D(source.lc, source.left, tang2) > Math.PI / 2;
+      // check if any of them are valid (can illuminate behind the target lighthouse)
+      if (angle2D(tang, source.left, source.lc) < Math.PI / 2) {
+        // problem is at the source
+        return [false, source.left, tang];
       } else {
-        const tang = findTangentPoint2D(source.left, target.lc, target.r);
-        if (angle2D(tang, source.left, source.lc) < Math.PI / 2) {
-          // problem is at the source
-          return [false, source.left, tang];
-        } else {
-          // source is okay, check for collusions in-between
-          const checkIDs = shortestArcModulus(sourceID, targetID, this.n);
-          for (let i of checkIDs) {
-            if (
-              circleLineCollision2D(this.Ls[i].lc, this.r, source.left, tang)
-            ) {
-              // collision happens
-              return [false, source.left, tang];
-            }
+        // source is okay, check for collusions in-between
+        const checkIDs = shortestArcModulus(sourceID, targetID, this.n);
+        for (let i of checkIDs) {
+          if (circleLineCollision2D(this.Ls[i].lc, this.r, source.left, tang)) {
+            // collision happens
+            return [false, source.left, tang];
           }
-          // all good
-          return [true, source.left, tang];
         }
+        // all good
+        return [true, source.left, tang];
       }
     } else {
       throw new Error("Unknown variation.");
@@ -120,6 +144,21 @@ class LighthouseManager {
     }
     // no candidates!
     return -1;
+  }
+
+  // Check if a ray from sourceP that crosses over tangP, can illuminate the target lighthouse at targetC
+  isValidIntersection(target, sourceP, tangP) {
+    // find the intersection of the ray and placement
+    const intersection = findLineIntersection2D(
+      this.pc,
+      target.lc,
+      sourceP,
+      tangP
+    );
+    const d1 = this.n + target.r; // placement center <--> target edge
+    const d2 = dist2D(target.lc, intersection) - target.r; // target edge <--> intersection
+    const d3 = dist2D(this.pc, intersection); // placement center <--> intersection
+    return d3 === d2 + d1;
   }
 }
 
