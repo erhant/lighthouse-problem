@@ -34,26 +34,23 @@ class LighthouseManager {
     this.n = n; // number of lighthouses
     this.pc = pc; // placement center
     this.Ls = []; // lighthouses
-  }
-
-  makeLighthouse() {
-    // find the lighthouse center
-    const lc = rotate2D(
-      { x: this.pc.x + this.n, y: this.pc.y },
-      this.pc,
-      -this.a * this.Ls.length
-    );
-    // find the illumination points
-    const mid = {
-      x: ((this.n - this.r) * lc.x + this.pc.x) / this.n,
-      y: ((this.n - this.r) * lc.y + this.pc.y) / this.n,
-    };
-    const right = rotate2D(mid, lc, this.a / 2);
-    const left = rotate2D(mid, lc, -this.a / 2);
-    // create lighthouse
-    this.Ls.push(
-      new Lighthouse(
-        this.Ls.length,
+    for (let i = 0; i < n; ++i) {
+      // find lighthouse center
+      const lc = rotate2D(
+        { x: this.pc.x + this.n, y: this.pc.y },
+        this.pc,
+        -this.a * i
+      );
+      // find the illumination points
+      const mid = {
+        x: ((this.n - this.r) * lc.x + this.pc.x) / this.n,
+        y: ((this.n - this.r) * lc.y + this.pc.y) / this.n,
+      };
+      const right = rotate2D(mid, lc, this.a / 2);
+      const left = rotate2D(mid, lc, -this.a / 2);
+      // create lighthouse
+      this.Ls[i] = new Lighthouse(
+        i,
         this.r,
         this.pc,
         lc,
@@ -61,10 +58,8 @@ class LighthouseManager {
         mid,
         right,
         this.a
-      )
-    );
-    // return false if we have created them all
-    return this.Ls.length < this.n;
+      );
+    }
   }
 
   // Tries to find the illumination line from source to target
@@ -98,9 +93,6 @@ class LighthouseManager {
         });
       }
     } else if (v === Variation.ARC) {
-      // second variation
-      if (this.Ls.length != this.n)
-        throw new Error("Please create all lighthouses before trying this.");
       // lighthouses in between source and target (needed for collision check later)
       const checkIDs = shortestArcModulus(sourceID, targetID, this.n);
       // we will do the calculations as in POINT, but from left and right side of the arcs.
@@ -117,16 +109,19 @@ class LighthouseManager {
           );
           // check if they can reach behind the lighthouse
           let isValid = this.isValidIntersection(intersection, target);
-          // check if they are at a correct angle with the source arc (must be more than 90 for left)
-          isValid =
-            isValid && angle2D(source.lc, sourcePoint, tang) > Math.PI / 2;
 
+          // check if they are at a correct angle with the source arc
+          isValid =
+            isValid &&
+            Math.abs(angle2D(tang, sourcePoint, source.lc)) >=
+              math.degToRad(90);
           // check if any of them collide with another lighthouse on the way
           isValid =
             isValid &&
-            checkIDs.some((i) =>
+            !checkIDs.some((i) =>
               circleLineCollision2D(this.Ls[i].lc, this.r, sourcePoint, tang)
             );
+
           // all good
           ans.push({
             from: sourcePoint,
@@ -146,9 +141,12 @@ class LighthouseManager {
     return -1;
   }
 
-  // Check if a ray from sourceP that crosses over tangP, can illuminate the target lighthouse at targetC
+  // Check if intersection is behind the target lighthouse, away from the placement center
   isValidIntersection(intersection, target) {
-    return dist2D(this.pc, intersection) > this.n + target.r;
+    return (
+      dist2D(this.pc, intersection) > this.n + target.r &&
+      dist2D(this.pc, intersection) > dist2D(target.lc, intersection)
+    );
   }
 }
 

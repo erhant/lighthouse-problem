@@ -7,7 +7,7 @@ function dist2D(p1, p2) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-// Find angle between <aob> in radians
+// Find angle between <aob> in radians (counterclockwise)
 function angle2D(a, o, b) {
   // const ang = math.radToDeg(
   //   Math.atan2(b.y - o.y, b.x - o.x) - Math.atan2(a.y - o.y, a.x - o.x)
@@ -86,13 +86,12 @@ function findLineIntersection2D(p1, p2, p3, p4) {
 function shortestArcModulus(s, t, n) {
   let l, r, ls, rs;
   l = r = s; // start from the source, and go in two direction to the target
-  ls = rs = []; // keep record of the values seen
-  // find left direction
+  ls = [];
+  rs = [];
   while (l != t) {
     l = (l - 1) % n;
     ls.push(l);
   }
-  // find right direction
   while (r != t) {
     r = (r + 1) % n;
     rs.push(r);

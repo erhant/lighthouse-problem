@@ -16,10 +16,10 @@ const DrawTypes = {
 };
 
 const params = {
-  N: 5,
+  N: 3,
   radius: 1,
-  variation: Variation.POINT,
-  scaleFactor: 3,
+  variation: Variation.ARC,
+  scaleFactor: 4,
   source: 3,
   target: 0,
   drawType: DrawTypes.ALL,
@@ -29,10 +29,10 @@ let scale;
 
 const sketch = () => {
   return ({ context, width, height }) => {
-    params.source = params.source % params.N;
-    params.target = params.target % params.N;
+    params.source = Math.floor(params.source) % params.N;
+    params.target = Math.floor(params.target) % params.N;
     // background
-    context.fillStyle = "#f7f4f4";
+    context.fillStyle = "white";
     context.fillRect(0, 0, width, height);
 
     context.translate(width / 2, height / 2); // move to center
@@ -44,8 +44,15 @@ const sketch = () => {
     context.lineWidth = 2 / scale;
 
     const L = new LighthouseManager(params.N, params.radius); // create manager
-    while (L.makeLighthouse()) {} // creates lighthouses
     L.Ls.forEach((l) => drawLighthouse(context, l)); // draw lighthouses
+
+    // placement center
+    context.save();
+    context.fillStyle = "#f7f4f4";
+    context.beginPath();
+    context.arc(0, 0, (width * 1e-2) / scale, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
 
     if (params.drawType === DrawTypes.FIND) {
       // find the first illuminating ID
@@ -59,6 +66,7 @@ const sketch = () => {
         console.log("No lighthouse can illuminate this target.");
       }
     } else if (params.drawType === DrawTypes.CHOOSE) {
+      // draw from source to target chosen by user
       drawIllumination(
         context,
         L.tryIlluminate(params.source, params.target, params.variation)
@@ -76,14 +84,6 @@ const sketch = () => {
         );
       }
     }
-
-    // placement center
-    context.save();
-    context.fillStyle = "grey";
-    context.beginPath();
-    context.arc(0, 0, (width * 1e-2) / scale, 0, Math.PI * 2);
-    context.fill();
-    context.restore();
   };
 };
 
@@ -158,7 +158,7 @@ function drawLighthouse(context, l) {
 
 // Draw an illumination line
 function drawIllumination(context, illumLines) {
-  console.log(illumLines);
+  //console.log(illumLines);
   context.save();
 
   illumLines.forEach((line) => {
@@ -168,16 +168,24 @@ function drawIllumination(context, illumLines) {
     context.lineTo(line.to.x, line.to.y);
     context.stroke();
     //context.fillStyle = line.isValid ? "green" : "gray";
-    context.beginPath();
-    context.fillStyle = "gray";
-    context.arc(
-      line.intersection.x,
-      line.intersection.y,
-      params.radius / 10,
-      0,
-      Math.PI * 2
-    );
-    context.fill();
+    if (line.isValid) {
+      context.save();
+      context.beginPath();
+      context.moveTo(line.to.x, line.to.y);
+      context.lineTo(line.intersection.x, line.intersection.y);
+      context.stroke();
+      context.beginPath();
+      context.fillStyle = "green";
+      context.arc(
+        line.intersection.x,
+        line.intersection.y,
+        params.radius / 10,
+        0,
+        Math.PI * 2
+      );
+      context.fill();
+      context.restore();
+    }
   });
 
   context.restore();

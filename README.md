@@ -2,9 +2,9 @@
 
 This repository includes some codes regarding my paper ["A Lighthouse Illumination Problem"](https://arxiv.org/abs/1903.09001).
 
-TODO: arc has problems??
-TODO: color lines differently, not both same
-TODO: draw two lines for tangents)
+TODO: Find the first illuminating lines closest to target from both sides and draw that one only
+TODO: Compute the dark area (write to console for now)
+
 
 There are two variations regarding how the illumination occurs, described briefly by the following figure from the paper:
 <p align="center">
