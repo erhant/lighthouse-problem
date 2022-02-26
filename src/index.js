@@ -2,7 +2,7 @@ const canvasSketch = require("canvas-sketch");
 const random = require("canvas-sketch-util/random");
 const math = require("canvas-sketch-util/math");
 const Tweakpane = require("tweakpane");
-const { LighthouseManager } = require("./lighthouse");
+const { LighthouseManager, Variation } = require("./lighthouse");
 
 const settings = {
   dimensions: [1080, 1080],
@@ -17,11 +17,15 @@ const DrawTypes = {
 
 const params = {
   N: 5,
-  variation: 1, // 1:point, 2:arc
+  radius: 1,
+  variation: Variation.POINT,
+  scaleFactor: 3,
   source: 3,
   target: 0,
-  drawType: DrawTypes.FIND,
+  drawType: DrawTypes.ALL,
 };
+
+let scale;
 
 const sketch = () => {
   return ({ context, width, height }) => {
@@ -32,11 +36,14 @@ const sketch = () => {
     context.fillRect(0, 0, width, height);
 
     context.translate(width / 2, height / 2); // move to center
-    const scale = Math.max(width / (3 * params.N), height / (3 * params.N));
+    scale = Math.max(
+      width / (params.scaleFactor * params.N),
+      height / (params.scaleFactor * params.N)
+    );
     context.scale(scale, scale); // scale up
     context.lineWidth = 2 / scale;
 
-    const L = new LighthouseManager(params.N); // create manager
+    const L = new LighthouseManager(params.N, params.radius); // create manager
     while (L.makeLighthouse()) {} // creates lighthouses
     L.Ls.forEach((l) => drawLighthouse(context, l)); // draw lighthouses
 
@@ -88,6 +95,8 @@ const createPaneAndStart = async () => {
   folder.addInput(params, "N", { min: 2, max: 40, step: 1 });
   folder.addInput(params, "source");
   folder.addInput(params, "target");
+  folder.addInput(params, "radius", { min: 0.06, max: 3.14, step: 0.04 });
+  folder.addInput(params, "scaleFactor", { min: 3, max: 10, step: 1 });
   folder.addInput(params, "drawType", {
     options: {
       find: DrawTypes.FIND,
@@ -97,7 +106,7 @@ const createPaneAndStart = async () => {
     },
   });
   folder.addInput(params, "variation", {
-    options: { point: 1, arc: 2 },
+    options: { point: Variation.POINT, arc: Variation.ARC },
   });
 
   const sketchmgr = await canvasSketch(sketch, settings);
@@ -151,12 +160,24 @@ function drawLighthouse(context, l) {
 function drawIllumination(context, illumLines) {
   console.log(illumLines);
   context.save();
-  context.beginPath();
+
   illumLines.forEach((line) => {
+    context.beginPath();
     context.strokeStyle = line.isValid ? "green" : "red";
     context.moveTo(line.from.x, line.from.y);
     context.lineTo(line.to.x, line.to.y);
     context.stroke();
+    //context.fillStyle = line.isValid ? "green" : "gray";
+    context.beginPath();
+    context.fillStyle = "gray";
+    context.arc(
+      line.intersection.x,
+      line.intersection.y,
+      params.radius / 10,
+      0,
+      Math.PI * 2
+    );
+    context.fill();
   });
 
   context.restore();

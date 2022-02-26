@@ -9,14 +9,15 @@ function dist2D(p1, p2) {
 
 // Find angle between <aob> in radians
 function angle2D(a, o, b) {
-  const ang = math.radToDeg(
-    Math.atan2(b.y - o.y, b.x - o.x) - Math.atan2(a.y - o.y, a.x - o.x)
-  );
-  if (ang < 0) {
-    return math.degToRad(ang + 360);
-  } else {
-    return math.degToRad(ang);
-  }
+  // const ang = math.radToDeg(
+  //   Math.atan2(b.y - o.y, b.x - o.x) - Math.atan2(a.y - o.y, a.x - o.x)
+  // );
+  // if (ang < 0) {
+  //   return math.degToRad(ang + 360);
+  // } else {
+  //   return math.degToRad(ang);
+  // }
+  return Math.atan2(b.y - o.y, b.x - o.x) - Math.atan2(a.y - o.y, a.x - o.x);
 }
 
 // Rotate p around o for ang radians. (counterclockwise)

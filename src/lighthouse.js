@@ -45,8 +45,8 @@ class LighthouseManager {
     );
     // find the illumination points
     const mid = {
-      x: ((this.n - 1) * lc.x + this.pc.x) / this.n,
-      y: ((this.n - 1) * lc.y + this.pc.y) / this.n,
+      x: ((this.n - this.r) * lc.x + this.pc.x) / this.n,
+      y: ((this.n - this.r) * lc.y + this.pc.y) / this.n,
     };
     const right = rotate2D(mid, lc, this.a / 2);
     const left = rotate2D(mid, lc, -this.a / 2);
@@ -72,130 +72,87 @@ class LighthouseManager {
   tryIlluminate(sourceID, targetID, v = Variation.POINT) {
     const source = this.Ls[sourceID];
     const target = this.Ls[targetID];
+    const ans = [];
     if (v === Variation.POINT) {
       // find tangent points
-      const [tang1, tang2] = findTangentPoints2D(
-        source.lc,
-        target.lc,
-        target.r
-      );
-      // find the intersection of the ray and placement
-      const [intersection1, intersection2] = [
-        findLineIntersection2D(this.pc, target.lc, source.lc, tang1),
-        findLineIntersection2D(this.pc, target.lc, source.lc, tang2),
-      ];
-      // check if they can reach behind the lighthouse
-      let [isValid1, isValid2] = [
-        this.isValidIntersection(intersection1, target),
-        this.isValidIntersection(intersection2, target),
-      ];
-      // check if they do not collide with the source lighthouse itself
-      isValid1 = isValid1 && angle2D(this.pc, source.lc, tang1) <= this.a / 2;
-      isValid2 = isValid2 && angle2D(this.pc, source.lc, tang2) <= this.a / 2;
-
-      return [
-        {
+      const tangents = findTangentPoints2D(source.lc, target.lc, target.r);
+      for (const tang of tangents) {
+        // find the intersection of the ray and placement
+        const intersection = findLineIntersection2D(
+          this.pc,
+          target.lc,
+          source.lc,
+          tang
+        );
+        // check if they can reach behind the lighthouse
+        let isValid = this.isValidIntersection(intersection, target);
+        // check if they do not collide with the source lighthouse itself
+        isValid =
+          isValid && Math.abs(angle2D(this.pc, source.lc, tang)) < this.a / 2;
+        // record this line
+        ans.push({
           from: source.lc,
-          to: tang1,
-          isValid: true,
-          intersection: intersection1,
-        },
-        {
-          from: source.lc,
-          to: tang2,
-          isValid: isValid2,
-          intersection: intersection2,
-        },
-      ];
+          to: tang,
+          isValid: isValid,
+          intersection: intersection,
+        });
+      }
     } else if (v === Variation.ARC) {
       // second variation
       if (this.Ls.length != this.n)
         throw new Error("Please create all lighthouses before trying this.");
-
-      // lighthouse in between (needed for collision check later)
+      // lighthouses in between source and target (needed for collision check later)
       const checkIDs = shortestArcModulus(sourceID, targetID, this.n);
-
-      const ans = [];
-
       // we will do the calculations as in POINT, but from left and right side of the arcs.
       for (const sourcePoint of [source.left, source.right]) {
         // find tangent points from arc (left)
-        const [tang1, tang2] = findTangentPoints2D(
-          sourcePoint,
-          target.lc,
-          target.r
-        );
-        // find the intersection of the ray and placement
-        const [intersection1, intersection2] = [
-          findLineIntersection2D(this.pc, target.lc, sourcePoint, tang1),
-          findLineIntersection2D(this.pc, target.lc, sourcePoint, tang2),
-        ];
-        // check if they can reach behind the lighthouse
-        let [isValid1, isValid2] = [
-          this.isValidIntersection(intersection1, target),
-          this.isValidIntersection(intersection2, target),
-        ];
-        // check if they are at a correct angle with the source arc (must be more than 90 for left)
-        isValid1 =
-          isValid1 && angle2D(source.lc, sourcePoint, tang1) > Math.PI / 2;
-        isValid2 =
-          isValid2 && angle2D(source.lc, sourcePoint, tang2) > Math.PI / 2;
-
-        // check if any of them collide with another lighthouse on the way
-        isValid1 =
-          isValid1 &&
-          checkIDs.some((i) =>
-            circleLineCollision2D(this.Ls[i].lc, this.r, sourcePoint, tang1)
+        const tangents = findTangentPoints2D(sourcePoint, target.lc, target.r);
+        for (const tang of tangents) {
+          // find the intersection of the ray and placement
+          const intersection = findLineIntersection2D(
+            this.pc,
+            target.lc,
+            sourcePoint,
+            tang
           );
-        isValid2 =
-          isValid2 &&
-          checkIDs.some((i) =>
-            circleLineCollision2D(this.Ls[i].lc, this.r, sourcePoint, tang2)
-          );
+          // check if they can reach behind the lighthouse
+          let isValid = this.isValidIntersection(intersection, target);
+          // check if they are at a correct angle with the source arc (must be more than 90 for left)
+          isValid =
+            isValid && angle2D(source.lc, sourcePoint, tang) > Math.PI / 2;
 
-        // all good
-        ans.push({
-          from: sourcePoint,
-          to: tang1,
-          isValid: isValid1,
-          intersection: intersection1,
-        });
-        ans.push({
-          from: sourcePoint,
-          to: tang2,
-          isValid: isValid2,
-          intersection: intersection2,
-        });
+          // check if any of them collide with another lighthouse on the way
+          isValid =
+            isValid &&
+            checkIDs.some((i) =>
+              circleLineCollision2D(this.Ls[i].lc, this.r, sourcePoint, tang)
+            );
+          // all good
+          ans.push({
+            from: sourcePoint,
+            to: tang,
+            isValid: isValid,
+            intersection: intersection,
+          });
+        }
       }
-
-      return ans;
-    } else {
-      throw new Error("Unknown variation.");
     }
+
+    return ans;
   }
 
   findFirstIlluminatingID(targetID, v = Variation.POINT) {
-    let candidateID;
-    for (let i = 0; i < this.n / 2; i++) {
-      candidateID = (targetID + 1 + i) % this.n;
-      let [success, sP, tP] = this.tryIlluminate(candidateID, targetID, v);
-      if (success) {
-        return candidateID;
-      }
-    }
     // no candidates!
     return -1;
   }
 
   // Check if a ray from sourceP that crosses over tangP, can illuminate the target lighthouse at targetC
   isValidIntersection(intersection, target) {
-    const d1 = this.n + target.r; // placement center <--> target edge
-    const d2 = dist2D(target.lc, intersection) - target.r; // target edge <--> intersection
-    const d3 = dist2D(this.pc, intersection); // placement center <--> intersection
-    return d3 === d2 + d1;
+    return dist2D(this.pc, intersection) > this.n + target.r;
   }
 }
 
 module.exports = {
   LighthouseManager,
+  Variation,
 };
