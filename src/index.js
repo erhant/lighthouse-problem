@@ -148,17 +148,16 @@ function drawLighthouse(context, l) {
 }
 
 // Draw an illumination line
-function drawIllumination(context, illumObject) {
-  let [sP, v1, t1P, v2, t2P] = illumObject; // success, source point, target point
-  //console.log(success, sP, tP);
+function drawIllumination(context, illumLines) {
+  console.log(illumLines);
   context.save();
   context.beginPath();
-  context.strokeStyle = v1 ? "green" : "red";
-  context.moveTo(sP.x, sP.y);
-  context.lineTo(t1P.x, t1P.y);
-  context.strokeStyle = v2 ? "green" : "red";
-  context.moveTo(sP.x, sP.y);
-  context.lineTo(t2P.x, t2P.y);
-  context.stroke();
+  illumLines.forEach((line) => {
+    context.strokeStyle = line.isValid ? "green" : "red";
+    context.moveTo(line.from.x, line.from.y);
+    context.lineTo(line.to.x, line.to.y);
+    context.stroke();
+  });
+
   context.restore();
 }
