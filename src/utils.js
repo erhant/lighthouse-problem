@@ -89,11 +89,11 @@ function shortestArcModulus(s, t, n) {
   ls = [];
   rs = [];
   while (l != t) {
-    l = (l - 1) % n;
+    l = math.mod(l - 1, n);
     ls.push(l);
   }
   while (r != t) {
-    r = (r + 1) % n;
+    r = math.mod(r + 1, n);
     rs.push(r);
   }
   // exclude t

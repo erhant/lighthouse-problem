@@ -113,8 +113,7 @@ class LighthouseManager {
           // check if they are at a correct angle with the source arc
           isValid =
             isValid &&
-            Math.abs(angle2D(tang, sourcePoint, source.lc)) >=
-              math.degToRad(90);
+            Math.abs(angle2D(tang, sourcePoint, source.lc)) >= Math.PI / 2; // math.degToRad(90);
           // check if any of them collide with another lighthouse on the way
           isValid =
             isValid &&
@@ -136,9 +135,43 @@ class LighthouseManager {
     return ans;
   }
 
-  findFirstIlluminatingID(targetID, v = Variation.POINT) {
-    // no candidates!
-    return -1;
+  findIlluminations(targetID, v = Variation.POINT) {
+    if (Variation.POINT) {
+      if (this.n % 2 === 0) {
+        // even lighthouses = no illumination
+        return [false, null, null];
+      } else {
+        // furthest two lighthouses
+        return [
+          true,
+          this.tryIlluminate(
+            math.mod(targetID + Math.floor(this.n / 2), this.n),
+            targetID,
+            v
+          ),
+          this.tryIlluminate(
+            math.mod(targetID - Math.floor(this.n / 2), this.n),
+            targetID,
+            v
+          ),
+        ];
+      }
+    } else {
+      // search the first illuminating lighthouse from the target
+      let candidateID = targetID;
+      let i;
+      for (i = 1; i < Math.floor(this.n / 2); ++i) {
+        candidateID = math.mod(candidateID + 1, this.n);
+        const il = this.tryIlluminate(candidateID, targetID, Variation.ARC);
+        const ilValids = il.filter((line) => line.isValid);
+        if (ilValids.length > 0) break;
+      }
+      return [
+        true,
+        this.tryIlluminate(math.mod(targetID + i, this.n), targetID, v),
+        this.tryIlluminate(math.mod(targetID - i, this.n), targetID, v),
+      ];
+    }
   }
 
   // Check if intersection is behind the target lighthouse, away from the placement center
@@ -147,6 +180,24 @@ class LighthouseManager {
       dist2D(this.pc, intersection) > this.n + target.r &&
       dist2D(this.pc, intersection) > dist2D(target.lc, intersection)
     );
+  }
+
+  findDarkArea(illuminations) {
+    let min = this.n * 4; // arbitrarily large
+    let x = 0;
+    // find the shortest distance between tangent and intersection (from multiple lines)
+    illuminations.forEach((il) => {
+      if (il.isValid) {
+        const d = dist2D(il.to, il.intersection);
+        if (d < min) {
+          min = d;
+          x = d;
+        }
+      }
+    });
+    const r = this.r; // radius
+    // equal to N * 2 * (x * r / 2 - pi * r^2 * atan(x/r) / (2 * pi))
+    return this.n * (x * r - r * r * Math.atan(x / r));
   }
 }
 

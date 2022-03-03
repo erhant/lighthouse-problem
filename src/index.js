@@ -10,7 +10,7 @@ const settings = {
 
 const DrawTypes = {
   NONE: 0, // show nothing
-  FIND: 1, // find the first correct source to chosen target
+  ONE: 1, // find the dark-area defining light to chosen target
   CHOOSE: 2, // draw from chosen source to chosen target
   ALL: 3, // draw from all sources to chosen target
 };
@@ -20,7 +20,7 @@ const params = {
   radius: 1,
   variation: Variation.ARC,
   scaleFactor: 4,
-  source: 3,
+  source: 180,
   target: 0,
   drawType: DrawTypes.ALL,
 };
@@ -29,8 +29,13 @@ let scale;
 
 const sketch = () => {
   return ({ context, width, height }) => {
-    params.source = Math.floor(params.source) % params.N;
-    params.target = Math.floor(params.target) % params.N;
+    params.source = Math.round(
+      math.mapRange(params.source, 0, 360, 0, params.N - 1)
+    );
+    params.target = Math.round(
+      math.mapRange(params.target, 0, 360, 0, params.N - 1)
+    );
+    //if (params.source === params.target) return;
     // background
     context.fillStyle = "white";
     context.fillRect(0, 0, width, height);
@@ -54,17 +59,33 @@ const sketch = () => {
     context.fill();
     context.restore();
 
-    if (params.drawType === DrawTypes.FIND) {
+    if (
+      params.drawType === DrawTypes.NONE ||
+      (params.drawType === DrawTypes.CHOOSE && params.source === params.target)
+    ) {
+      // do nothing
+    } else if (params.drawType === DrawTypes.ONE) {
       // find the first illuminating ID
-      const s = L.findFirstIlluminatingID(params.target, params.variation);
-      if (s !== -1) {
-        drawIllumination(
-          context,
-          L.tryIlluminate(s, params.target, params.variation)
-        );
-      } else {
-        console.log("No lighthouse can illuminate this target.");
+      const [exists, i1, i2] = L.findIlluminations(
+        params.target,
+        params.variation
+      );
+      let darkAreaStr = "infinite";
+      if (exists) {
+        drawIllumination(context, i1);
+        drawIllumination(context, i2);
+        darkAreaStr = L.findDarkArea(i1, L.radius).toString(); // i2 or i1 does not matter
       }
+      context.save();
+      // scale back so that text is written normally
+      context.scale(1 / scale, 1 / scale);
+      context.translate(-width / 2, -height / 2);
+      context.fillStyle = "black";
+      context.font = "30px Consolas";
+      context.textAlign = "top";
+      context.fillText("Dark Area: " + darkAreaStr, 30, 30);
+      context.restore();
+      // write dark area
     } else if (params.drawType === DrawTypes.CHOOSE) {
       // draw from source to target chosen by user
       drawIllumination(
@@ -93,13 +114,13 @@ const createPaneAndStart = async () => {
 
   folder = pane.addFolder({ title: "lighthouses" });
   folder.addInput(params, "N", { min: 2, max: 40, step: 1 });
-  folder.addInput(params, "source");
-  folder.addInput(params, "target");
+  folder.addInput(params, "source", { min: 0, max: 360, step: 18 });
+  folder.addInput(params, "target", { min: 0, max: 360, step: 18 });
   folder.addInput(params, "radius", { min: 0.06, max: 3.14, step: 0.04 });
   folder.addInput(params, "scaleFactor", { min: 3, max: 10, step: 1 });
   folder.addInput(params, "drawType", {
     options: {
-      find: DrawTypes.FIND,
+      one: DrawTypes.ONE,
       choose: DrawTypes.CHOOSE,
       all: DrawTypes.ALL,
       none: DrawTypes.NONE,
@@ -135,13 +156,13 @@ function drawLighthouse(context, l) {
   // left illum point
   context.beginPath();
   context.fillStyle = "red";
-  context.arc(l.left.x, l.left.y, l.r / 10, 0, Math.PI * 2);
+  context.arc(l.left.x, l.left.y, l.r / 20, 0, Math.PI * 2);
   context.fill();
 
   // right illum point
   context.beginPath();
   context.fillStyle = "blue";
-  context.arc(l.right.x, l.right.y, l.r / 10, 0, Math.PI * 2);
+  context.arc(l.right.x, l.right.y, l.r / 20, 0, Math.PI * 2);
   context.fill();
 
   // line to both illum points
@@ -164,10 +185,10 @@ function drawIllumination(context, illumLines) {
   illumLines.forEach((line) => {
     context.beginPath();
     context.strokeStyle = line.isValid ? "green" : "red";
+    context.lineWidth = (line.isValid ? 2 : 1) / scale;
     context.moveTo(line.from.x, line.from.y);
     context.lineTo(line.to.x, line.to.y);
     context.stroke();
-    //context.fillStyle = line.isValid ? "green" : "gray";
     if (line.isValid) {
       context.save();
       context.beginPath();

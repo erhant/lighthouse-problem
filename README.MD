@@ -36,9 +36,3 @@ This _adjustment_ happens around every 10 or 9 steps from what I have seen so fa
 ![n500_2_plot](https://github.com/erhant/lighthouse-problem/blob/main/img/500_v2.png?raw=true)
 
 _The question:_ why is this plot like this? Why does that adjustment happen at that many steps?
-
-## Usage
-
-You only need Python with `numpy` and `matplotlib`.
-
-In both variations, there are two functions: `draw_all` and `draw_match`. The input is the number of lighthouses. It will plot the lighthouses, it will show the illumination lines and the intersection of x-axis with the dark area defining ray between lighthouse 0. If you only want to see the computation, without losing time with plots, use `compute_darkness` instead. You can also obtain the plots above via `plot_results` function.
