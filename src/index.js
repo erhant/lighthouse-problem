@@ -16,7 +16,7 @@ const DrawTypes = {
 };
 
 const params = {
-  N: 3,
+  lighthouses: 3,
   radius: 1,
   variation: Variation.ARC,
   scaleFactor: 4,
@@ -30,10 +30,10 @@ let scale;
 const sketch = () => {
   return ({ context, width, height }) => {
     params.source = Math.round(
-      math.mapRange(params.source, 0, 360, 0, params.N - 1)
+      math.mapRange(params.source, 0, 360, 0, params.lighthouses - 1)
     );
     params.target = Math.round(
-      math.mapRange(params.target, 0, 360, 0, params.N - 1)
+      math.mapRange(params.target, 0, 360, 0, params.lighthouses - 1)
     );
     //if (params.source === params.target) return;
     // background
@@ -42,13 +42,13 @@ const sketch = () => {
 
     context.translate(width / 2, height / 2); // move to center
     scale = Math.max(
-      width / (params.scaleFactor * params.N),
-      height / (params.scaleFactor * params.N)
+      width / (params.scaleFactor * params.lighthouses),
+      height / (params.scaleFactor * params.lighthouses)
     );
     context.scale(scale, scale); // scale up
     context.lineWidth = 2 / scale;
 
-    const L = new LighthouseManager(params.N, params.radius); // create manager
+    const L = new LighthouseManager(params.lighthouses, params.radius); // create manager
     L.Ls.forEach((l) => drawLighthouse(context, l)); // draw lighthouses
 
     // placement center
@@ -94,11 +94,11 @@ const sketch = () => {
       );
     } else if (params.drawType === DrawTypes.ALL) {
       // draw all
-      for (let i = 1; i < params.N; i++) {
+      for (let i = 1; i < params.lighthouses; i++) {
         drawIllumination(
           context,
           L.tryIlluminate(
-            (params.target + i) % params.N,
+            (params.target + i) % params.lighthouses,
             params.target,
             params.variation
           )
@@ -113,7 +113,7 @@ const createPaneAndStart = async () => {
   let folder;
 
   folder = pane.addFolder({ title: "lighthouses" });
-  folder.addInput(params, "N", { min: 2, max: 40, step: 1 });
+  folder.addInput(params, "lighthouses", { min: 2, max: 40, step: 1 });
   folder.addInput(params, "source", { min: 0, max: 360, step: 18 });
   folder.addInput(params, "target", { min: 0, max: 360, step: 18 });
   folder.addInput(params, "radius", { min: 0.06, max: 3.14, step: 0.04 });
